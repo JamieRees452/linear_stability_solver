@@ -1,10 +1,11 @@
 """
-Description : Numerical solver for the linear stability problem of one/two dimensional mean zonal flows with a corresponding mean density field in thermal wind balance 
+Numerical solver for the (dense) linear stability problem of two dimensional mean zonal flows with a corresponding mean density field in thermal wind balance 
 """
 
 from   itertools           import compress 
 import matplotlib.pyplot   as plt
 import numpy               as np
+from   scipy               import integrate
 from   scipy.integrate     import trapz
 from   scipy.linalg        import eig, block_diag
 from   scipy.sparse        import diags
@@ -193,7 +194,7 @@ def gep(ny, nz, k, mu, case, dim, Ri):
     """
     
     ########################################################################################################################################################################################################
-    # (i) Set up the domain
+    # (I) Set up the domain
     ########################################################################################################################################################################################################
     
     # Using the grid resolution we separate into cases based on whether the problem is one or two dimensional
@@ -247,41 +248,9 @@ def gep(ny, nz, k, mu, case, dim, Ri):
         Y,Z         = np.meshgrid(y, z);         Y_full,Z_half = np.meshgrid(y, z_mid) 
         Y_mid,Z_mid = np.meshgrid(y_mid, z_mid); Y_half,Z_full = np.meshgrid(y_mid, z)
         
+        
     ########################################################################################################################################################################################################
-    # (ii) Specify the mean zonal flow
-    ########################################################################################################################################################################################################
-    
-    if dim == '1D_M':
-        if case == 'RK':
-            beta = 2.29e-11; V = (beta*(L**2))
-            
-            U  = (V/2)*(1+np.cos((y/d)));  U_mid = (V/2)*(1+np.cos((y_mid/d)))
-            Uy = np.gradient(U,y);        Uy_mid = np.gradient(U_mid,y_mid)
-    
-    elif dim == '1D_V':
-        if case == 'EADY' or case == 'STONE':
-            U  = z;                U_mid = z_mid
-            Uz = np.ones_like(z); Uz_mid = np.ones_like(z_mid)
-    
-    elif dim == '2D':        
-        if case == 'EADY' or case == 'STONE':
-            U_mid = Z_mid; U_fh = Z_half; U_hf = Z_full
-            Uy_hf = np.zeros_like(U_hf); Uy_mid = np.zeros_like(U_mid)
-            Uz_hf = np.ones_like(U_hf);  Uz_mid = np.ones_like(U_mid)
-            
-        elif case == 'RK':
-            beta = 2.29e-11; V = (beta*(L**2))
-            
-            U_mid = (V/2)*(1+np.cos(np.pi*Y_mid/L)); Uy_mid = np.gradient(U_mid, y_mid, axis=1); Uz_mid = np.gradient(U_mid, z_mid, axis=0)
-            U_hf  = (V/2)*(1+np.cos(np.pi*Y_half/L)); Uz_hf = np.gradient(U_hf, z, axis=0)
-            U_fh  = (V/2)*(1+np.cos(np.pi*Y_full/L)); 
-
-    # U_mid = U evaluated at half points in y and half points in z
-    # U_fh  = U evaluated at (f)ull points in y and (h)alf points in z
-    # U_hf  = U evaluated at (h)alf points in y and (f)ull points in z
-    
-    ########################################################################################################################################################################################################
-    # (iii) Typical dimensional parameters 
+    # (II) Typical dimensional parameters 
     ########################################################################################################################################################################################################
     
     if dim == '1D_M':
@@ -319,48 +288,49 @@ def gep(ny, nz, k, mu, case, dim, Ri):
             S   = ((N*H)/(f0*L))**2  # Stratification Parameter
         
     ########################################################################################################################################################################################################
-    # (iv) Calculate the mean density profile 
+    # (III) Specify the mean zonal flow and density profiles
     ########################################################################################################################################################################################################
-        
+    
     if dim == '1D_M':
         if case == 'RK':
-            pass
+            beta = 2.29e-11; V = (beta*(L**2))
+            
+            U  = (V/2)*(1+np.cos((y/d)));  U_mid = (V/2)*(1+np.cos((y_mid/d)))
+            Uy = np.gradient(U,y);        Uy_mid = np.gradient(U_mid,y_mid)
     
     elif dim == '1D_V':
         if case == 'EADY' or case == 'STONE':
+            U  = z;                U_mid = z_mid
+            Uz = np.ones_like(z); Uz_mid = np.ones_like(z_mid)
+            
             ry = Uz; rz = (-S/eps)*np.ones(nz)
+    
+    elif dim == '2D':        
+        if case == 'EADY' or case == 'STONE':
+            U_mid = Z_mid; U_fh = Z_half; U_hf = Z_full
+            Uy_hf = np.zeros_like(U_hf); Uy_mid = np.zeros_like(U_mid)
+            Uz_hf = np.ones_like(U_hf);  Uz_mid = np.ones_like(U_mid)
             
-        else:
-            raise ValueError(f'TBC')
+            ry_hf = Uz_hf; rz_hf = (-S/eps)*np.ones_like(U_hf)
             
-    elif dim == '2D':
-        if case == 'RK':
-            # Calculate the mean density profile (by thermal wind balance)
-            r = np.zeros((nz, ny-1), dtype=np.float64)
-            for l in range(nz):
-                for j in range(ny-1):
-                    r[l, j] = (beta*r0/g)*trapz((Y_half*Uz_hf)[l, :j],dx=dy)
-
-            r  = r - np.tile((N2*r0/g)*z, (len(y)-1, 1)).T 
-            ry = (beta*r0/g)*Y_half*Uz_hf; rz = np.gradient(r, z, axis=0)
-        
-        elif case == 'EADY' or case == 'STONE':
-            ry = Uz_hf; rz = (-S/eps)*np.ones_like(U_hf)
+        elif case == 'RK':
+            beta = 2.29e-11; V = (beta*(L**2))
             
-        else:
-            raise ValueError(f'{case} is not a valid case for a {dim} problem')
+            U_mid = (V/2)*(1+np.cos(np.pi*Y_mid/L)); Uy_mid = np.gradient(U_mid, y_mid, axis=1); Uz_mid = np.gradient(U_mid, z_mid, axis=0)
+            U_hf  = (V/2)*(1+np.cos(np.pi*Y_half/L)); Uz_hf = np.gradient(U_hf, z, axis=0)
+            U_fh  = (V/2)*(1+np.cos(np.pi*Y_full/L)); 
+            
+            r_hf  = (beta*r0/g)*integrate.cumtrapz(Y_half*Uz_hf, y_mid, initial=0) - np.tile((N2*r0/g)*z, (len(y)-1, 1)).T
+            ry_hf = (beta*r0/g)*Y_half*Uz_hf; rz_hf = np.gradient(r_hf, z, axis=0)
             
     ########################################################################################################################################################################################################
-    # (v) Non-dimensionalise the equations of motion (only relevant for the TIW problem) 
+    # (IV) Non-dimensionalise the equations of motion for the Rayleigh-Kuo problem (EADY/STONE are already non-dimensional)
     ########################################################################################################################################################################################################
     
     if dim == '1D_M':
         if case == 'RK':
             y = y/L; dy = abs(y[1]-y[0]); y_mid = y_mid/L; 
             U = U/V; U_mid = U_mid/V; Uy = (L/V)*Uy; Uy_mid = (L/V)*Uy_mid
-        
-    elif dim == '1D_V':
-        pass
     
     elif dim == '2D':            
         if case == 'RK':
@@ -371,7 +341,7 @@ def gep(ny, nz, k, mu, case, dim, Ri):
 
             U_mid = U_mid/V; Uy_mid = (L/V)*Uy_mid; Uz_mid = (D/V)*Uz_mid  
 
-            ry = (g*D/(r0*beta*L*V))*ry; rz = (g*(D**2)/(r0*beta*(L**2)*V))*rz  
+            ry_hf = (g*D/(r0*beta*L*V))*ry_hf; rz_hf = (g*(D**2)/(r0*beta*(L**2)*V))*rz_hf  
 
             Y_mid,Z_mid = np.meshgrid(y_mid,z_mid); Y_full,Z_half = np.meshgrid(y,z_mid)
             
@@ -384,7 +354,7 @@ def gep(ny, nz, k, mu, case, dim, Ri):
     # CRP = ((C)ontinuity equation)((R)HS of the equation)((p) perturbation)
 
     ########################################################################################################################################################################################################
-    # (vi) Build the zonal momentum equation
+    # (V) Build the zonal momentum equation
     ########################################################################################################################################################################################################
     
     if dim == '1D_M':
@@ -447,8 +417,8 @@ def gep(ny, nz, k, mu, case, dim, Ri):
         
         elif case == 'RK' or case == 'STONE':
             for i in range(ny-1):                        
-                ZLV2[i*(nz-1):(i+1)*(nz-1), i*(nz-1):(i+1)*(nz-1)]               = tridiag((ry/rz)[1:-1, i], ((ry/rz)[:-1, i]+(ry/rz)[1:, i]), (ry/rz)[1:-1, i], [(ry/rz)[1, i], (ry/rz)[1, i], (ry/rz)[-2, i], (ry/rz)[-2, i]]) 
-                ZLV2[i*(nz-1):(i+1)*(nz-1), i*(nz-1)+(nz-1):(i+1)*(nz-1)+(nz-1)] = tridiag((ry/rz)[1:-1, i], ((ry/rz)[:-1, i]+(ry/rz)[1:, i]), (ry/rz)[1:-1, i], [(ry/rz)[1, i], (ry/rz)[1, i], (ry/rz)[-2, i], (ry/rz)[-2, i]]) 
+                ZLV2[i*(nz-1):(i+1)*(nz-1), i*(nz-1):(i+1)*(nz-1)] = tridiag((ry_hf/rz_hf)[1:-1, i], ((ry_hf/rz_hf)[:-1, i]+(ry_hf/rz_hf)[1:, i]), (ry_hf/rz_hf)[1:-1, i], [(ry_hf/rz_hf)[1, i], (ry_hf/rz_hf)[1, i], (ry_hf/rz_hf)[-2, i], (ry_hf/rz_hf)[-2, i]]) 
+                ZLV2[i*(nz-1):(i+1)*(nz-1), i*(nz-1)+(nz-1):(i+1)*(nz-1)+(nz-1)] = tridiag((ry_hf/rz_hf)[1:-1, i], ((ry_hf/rz_hf)[:-1, i]+(ry_hf/rz_hf)[1:, i]), (ry_hf/rz_hf)[1:-1, i], [(ry_hf/rz_hf)[1, i], (ry_hf/rz_hf)[1, i], (ry_hf/rz_hf)[-2, i], (ry_hf/rz_hf)[-2, i]]) 
 
         ZLV2 = (Uz_mid.flatten(order='F')*(ZLV2.T)).T 
 
@@ -460,7 +430,7 @@ def gep(ny, nz, k, mu, case, dim, Ri):
             ZLP1 = np.zeros_like(ZLP0)
 
         elif case == 'RK' or case == 'STONE':
-            ZLP1 = np.asarray([tridiag((U_hf/rz)[1:-1, i], -((U_hf/rz)[:-1, i]-(U_hf/rz)[1:, i]), -(U_hf/rz)[1:-1, i], [(U_hf/rz)[1, i], -(U_hf/rz)[1, i], (U_hf/rz)[-2, i], -(U_hf/rz)[-2, i]]) for i in range(ny-1)])
+            ZLP1 = np.asarray([tridiag((U_hf/rz_hf)[1:-1, i], -((U_hf/rz_hf)[:-1, i]-(U_hf/rz_hf)[1:, i]), -(U_hf/rz_hf)[1:-1, i], [(U_hf/rz_hf)[1, i], -(U_hf/rz_hf)[1, i], (U_hf/rz_hf)[-2, i], -(U_hf/rz_hf)[-2, i]]) for i in range(ny-1)])
             ZLP1 = block_diag(*ZLP1) 
             ZLP1 = (Uz_mid.flatten(order='F')*(ZLP1.T)).T
 
@@ -473,14 +443,14 @@ def gep(ny, nz, k, mu, case, dim, Ri):
             ZRP1 = np.zeros_like(ZLP0)
 
         elif case == 'RK' or case == 'STONE':
-            ZRP1 = np.asarray([tridiag((1/rz)[1:-1, i], -((1/rz)[:-1, i]-(1/rz)[1:, i]), -(1/rz)[1:-1, i], [(1/rz)[1, i], -(1/rz)[1, i], (1/rz)[-2, i], -(1/rz)[-2, i]]) for i in range(ny-1)])
+            ZRP1 = np.asarray([tridiag((1/rz_hf)[1:-1, i], -((1/rz_hf)[:-1, i]-(1/rz_hf)[1:, i]), -(1/rz_hf)[1:-1, i], [(1/rz_hf)[1, i], -(1/rz_hf)[1, i], (1/rz_hf)[-2, i], -(1/rz_hf)[-2, i]]) for i in range(ny-1)])
             ZRP1 = block_diag(*ZRP1) 
             ZRP1 = (Uz_mid.flatten(order='F')*(ZRP1.T)).T
 
         ZRP = np.zeros_like(ZLP0) - ((eps*k)/(2*dz))*ZRP1
 
     ########################################################################################################################################################################################################
-    # (vii) Build the meridional momentum equation
+    # (VI) Build the meridional momentum equation
     ########################################################################################################################################################################################################
     
     if dim == '1D_M':
@@ -524,8 +494,8 @@ def gep(ny, nz, k, mu, case, dim, Ri):
         elif case == 'RK':
             MLU0 = np.zeros((ny*(nz-1), (ny-1)*(nz-1)))
             for i in range((ny-2)*(nz-1)):                
-                MLU0[i+(nz-1), i]        = Y_full.flatten(order='F')[i+(nz-1)] # Equatorial beta plane                 
-                MLU0[i+(nz-1), i+(nz-1)] = Y_full.flatten(order='F')[i+(nz-1)] # Equatorial beta plane
+                MLU0[i+(nz-1), i]        = Y_full.flatten(order='F')[i+(nz-1)] # Equatorial beta plane (beta=1 due to non-dimensionalisation)                 
+                MLU0[i+(nz-1), i+(nz-1)] = Y_full.flatten(order='F')[i+(nz-1)] # Equatorial beta plane (beta=1 due to non-dimensionalisation)  
             MLU = (-1j/2)*MLU0
         
         MLV = eps*k*np.diag(U_fh.flatten(order='F'))
@@ -549,7 +519,7 @@ def gep(ny, nz, k, mu, case, dim, Ri):
         MRP = np.zeros((ny*(nz-1), (ny-1)*(nz-1)))
 
     ########################################################################################################################################################################################################
-    # (viii) Build the continuity equation
+    # (VII) Build the continuity equation
     ########################################################################################################################################################################################################
     
     if dim == '1D_M':
@@ -594,32 +564,35 @@ def gep(ny, nz, k, mu, case, dim, Ri):
 
         CLV1 = np.zeros(((ny-1)*(nz-1), (ny*(nz-1)))) 
         for i in range(ny-1):                        
-            CLV1[i*(nz-1):(i+1)*(nz-1), i*(nz-1):(i+1)*(nz-1)]               = tridiag((ry/rz)[1:-1, i], ((ry/rz)[:-1, i]-(ry/rz)[1:, i]), -(ry/rz)[1:-1, i], [-(ry/rz)[1, i], -(ry/rz)[1, i], (ry/rz)[-2, i], (ry/rz)[-2, i]]) 
-            CLV1[i*(nz-1):(i+1)*(nz-1), i*(nz-1)+(nz-1):(i+1)*(nz-1)+(nz-1)] = tridiag((ry/rz)[1:-1, i], ((ry/rz)[:-1, i]-(ry/rz)[1:, i]), -(ry/rz)[1:-1, i], [-(ry/rz)[1, i], -(ry/rz)[1, i], (ry/rz)[-2, i], (ry/rz)[-2, i]]) 
+            CLV1[i*(nz-1):(i+1)*(nz-1), i*(nz-1):(i+1)*(nz-1)] = tridiag((ry_hf/rz_hf)[1:-1, i], ((ry_hf/rz_hf)[:-1, i]-(ry_hf/rz_hf)[1:, i]), -(ry_hf/rz_hf)[1:-1, i], [-(ry_hf/rz_hf)[1, i], -(ry_hf/rz_hf)[1, i], (ry_hf/rz_hf)[-2, i], (ry_hf/rz_hf)[-2, i]]) 
+            CLV1[i*(nz-1):(i+1)*(nz-1), i*(nz-1)+(nz-1):(i+1)*(nz-1)+(nz-1)] = tridiag((ry_hf/rz_hf)[1:-1, i], ((ry_hf/rz_hf)[:-1, i]-(ry_hf/rz_hf)[1:, i]), -(ry_hf/rz_hf)[1:-1, i], [-(ry_hf/rz_hf)[1, i], -(ry_hf/rz_hf)[1, i], (ry_hf/rz_hf)[-2, i], (ry_hf/rz_hf)[-2, i]]) 
 
         CLV = (1j/dy)*CLV0 - (1j/(4*dz))*CLV1 
 
-        CLP_blocks = np.asarray([tridiag((U_hf/rz)[1:-1, i], -((U_hf/rz)[:-1, i]+(U_hf/rz)[1:, i]), (U_hf/rz)[1:-1, i], [-(U_hf/rz)[1, i], (U_hf/rz)[1, i], (U_hf/rz)[-2, i], -(U_hf/rz)[-2, i]]) for i in range(ny-1)])
-        CLP        = (k/(dz**2))*block_diag(*CLP_blocks) 
+        CLP_blocks = np.asarray([tridiag((U_hf/rz_hf)[1:-1, i], -((U_hf/rz_hf)[:-1, i]+(U_hf/rz_hf)[1:, i]), (U_hf/rz_hf)[1:-1, i], [-(U_hf/rz_hf)[1, i], (U_hf/rz_hf)[1, i], (U_hf/rz_hf)[-2, i], -(U_hf/rz_hf)[-2, i]]) for i in range(ny-1)])
+        CLP = (k/(dz**2))*block_diag(*CLP_blocks) 
 
         CRU = np.zeros_like(CLU)
         CRV = np.zeros_like(CLV)
 
-        CRP_blocks = np.asarray([tridiag((1/rz)[1:-1, i], -((1/rz)[:-1, i]+(1/rz)[1:, i]), (1/rz)[1:-1, i], [-(1/rz)[1, i], (1/rz)[1, i], (1/rz)[-2, i], -(1/rz)[-2, i]]) for i in range(ny-1)])
-        CRP        = (k/(dz**2))*block_diag(*CRP_blocks) 
+        CRP_blocks = np.asarray([tridiag((1/rz_hf)[1:-1, i], -((1/rz_hf)[:-1, i]+(1/rz_hf)[1:, i]), (1/rz_hf)[1:-1, i], [-(1/rz_hf)[1, i], (1/rz_hf)[1, i], (1/rz_hf)[-2, i], -(1/rz_hf)[-2, i]]) for i in range(ny-1)])
+        CRP = (k/(dz**2))*block_diag(*CRP_blocks) 
         
     ########################################################################################################################################################################################################
-    # (iX) Apply boundary conditions
+    # (VIII) Apply boundary conditions
     ########################################################################################################################################################################################################
     
     if dim == '2D':
+    
+        # No-normal flow at the meridional walls of the domain
         if case == 'RK':
             MLV[:(nz-1),:(nz-1)]   = np.diag(np.ones(nz-1)) 
             MLV[-(nz-1):,-(nz-1):] = np.diag(np.ones(nz-1))
 
             MRV[:(nz-1),:]  = 0
             MRV[-(nz-1):,:] = 0
-    
+        
+        # Periodic flow at the meridional walls of the domain
         if case == 'EADY' or case == 'STONE':
             ZLU = np.hstack([ZLU, np.zeros((ZLU.shape[0], (nz-1)))]) 
             ZLU = np.vstack([ZLU, np.zeros(((nz-1), ZLU.shape[1]))])
@@ -667,7 +640,7 @@ def gep(ny, nz, k, mu, case, dim, Ri):
             CRP = np.vstack([CRP, np.zeros(((nz-1), CRP.shape[1]))])
 
     ########################################################################################################################################################################################################
-    # (X) Build the coefficient matrices A and B of the generalised eigenvalue problem
+    # (IX) Build the coefficient matrices A and B of the generalised eigenvalue problem
     ########################################################################################################################################################################################################
     
     # Form the LHS and RHS of each equation of motion as matrices
@@ -678,13 +651,10 @@ def gep(ny, nz, k, mu, case, dim, Ri):
     A = np.vstack([ZLE, MLE, CLE]); B = np.vstack([ZRE, MRE, CRE])
     
     ########################################################################################################################################################################################################
-    # (Xi)  Solve the generalised eigenvalue problem and clean the eigenvalue spectrum
+    # (X)  Solve the generalised eigenvalue problem and clean the eigenvalue spectrum
     ########################################################################################################################################################################################################
     evals, vl, evecs = eig(A, B, left=True, right=True)
     evals, evecs     = clean_evals(A, B, evals, vl, evecs, True)
     evecs = evecs[:, np.argmax(evals.imag)]
-    
-    #evals, evecs = eig(A, B)
-    #evecs = evecs[:, np.argmax(evals.imag)]
     
     return evals, evecs
