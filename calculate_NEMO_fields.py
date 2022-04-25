@@ -63,7 +63,7 @@ def mean_velocity(ny, nz, integration, stability):
     
     Uy = np.gradient(U, y, axis=1); Uz = np.gradient(U, z, axis=0)
     
-    # Interpolate onto a grid of (ny, nz) points (explanation of this section coming soon) ##############################
+    # Interpolate onto a grid of (ny, nz) points (explanation of this section coming soon, but by inspection of plots it seems correct) ######
     
     y_old = lat/np.amax(abs(lat)); z_old = depth/np.amax(abs(depth)); Y_old, Z_old = np.meshgrid(y_old, z_old)
     

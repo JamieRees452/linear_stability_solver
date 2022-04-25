@@ -88,7 +88,11 @@ def on_each_grid(ny, nz, case, integration, stability):
         N2_mid = 8.883e-5*np.ones(Z_mid.shape[0])
 
     r = (r0/g)*(beta*integrate.cumtrapz(Y*Uz, y, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y), 1)).T) + r0
-    ry = (beta*r0/g)*Y*Uz; rz = np.gradient(r, z, axis=0); rz=rz-np.amax(rz)*1.5 # artificial changes
+    ry = (beta*r0/g)*Y*Uz; rz = np.gradient(r, z, axis=0); 
+    
+    # For the NEMO case we artificially change rz such that rz<0 everywhere in the domain. This allows us to preliminarily calculate growth rates
+    # We do still need to check where the error (or even if it is an error) in rz. We comment this change out for the Proehl cases.
+    rz=rz-np.amax(rz)*1.5 
     
     r_hf = (r0/g)*(beta*integrate.cumtrapz(Y_half*Uz_hf, y_mid, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y)-1, 1)).T) + r0
     ry_hf = (beta*r0/g)*Y_half*Uz_hf; rz_hf = np.gradient(r_hf, z, axis=0); rz_hf=rz_hf-np.amax(rz_hf)*1.5 # artificial changes

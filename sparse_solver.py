@@ -1,5 +1,5 @@
 """
-Numerical solver for the linear stability problem of two dimensional mean zonal flows with a corresponding mean density field in thermal wind balance 
+Numerical solver for the (sparse) linear stability problem of two dimensional mean zonal flows with a corresponding mean density field in thermal wind balance 
 """
 
 import matplotlib.pyplot   as plt
@@ -109,7 +109,7 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
     """
     
     ########################################################################################################################################################################################################
-    # (i) Set up the domain
+    # (I) Set up the domain (CHECKED)
     ########################################################################################################################################################################################################
 
     if case == 'NEMO':
@@ -121,7 +121,7 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
         depth = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/depth.txt'); depth = -depth[::-1]
         
         L = abs(lat[0])*111.12*1000
-        D = 1000
+        D = abs(depth[0])
         
     else:
         L = (10*111.12)*1000 # Meridional half-width of the domain (m)
@@ -136,13 +136,13 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
     Y_mid,Z_mid = np.meshgrid(y_mid, z_mid); Y_half,Z_full = np.meshgrid(y_mid, z)
         
     ########################################################################################################################################################################################################
-    # (ii) Specify the mean zonal flow and denisty profiles
+    # (II) Specify the mean zonal flow and denisty profiles (CHECKED for case=Proehl, needs more checking for case=NEMO)
     ########################################################################################################################################################################################################
 
     U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf, r, r_mid, r_hf, ry, ry_mid, ry_hf, rz, rz_mid, rz_hf = mean_fields.on_each_grid(ny, nz, case, integration, stability)
 
     ########################################################################################################################################################################################################
-    # (iii) Typical dimensional parameters 
+    # (III) Typical dimensional parameters 
     ########################################################################################################################################################################################################
            
     # Typical values for the equatorial ocean 
@@ -151,7 +151,7 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
     g      = 9.81              # Gravitational acceleration (ms^{-2})
 
     ########################################################################################################################################################################################################
-    # (vi) Build the zonal momentum equation
+    # (IV) Build the zonal momentum equation (CHECKED)
     ########################################################################################################################################################################################################
                 
     ZLU = k*np.diag(U_mid.flatten(order='F'))
@@ -194,7 +194,7 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
     ZRP = np.zeros_like(ZLP0) - (1/g)*(k/(2*dz))*ZRP1
 
     ########################################################################################################################################################################################################
-    # (vii) Build the meridional momentum equation
+    # (V) Build the meridional momentum equation (CHECKED)
     ########################################################################################################################################################################################################
 
     MLU0 = np.zeros((ny*(nz-1), (ny-1)*(nz-1)))
@@ -216,7 +216,7 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
     MRP = np.zeros((ny*(nz-1), (ny-1)*(nz-1)))
 
     ########################################################################################################################################################################################################
-    # (viii) Build the continuity equation
+    # (VI) Build the continuity equation (CHECKED)
     ########################################################################################################################################################################################################   
     
     CLU = k*np.eye((ny-1)*(nz-1))
@@ -228,24 +228,25 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
 
     CLV1 = np.zeros(((ny-1)*(nz-1), (ny*(nz-1)))) 
     for i in range(ny-1):                        
-        CLV1[i*(nz-1):(i+1)*(nz-1), i*(nz-1):(i+1)*(nz-1)]               = tridiag((ry_hf/rz_hf)[1:-1, i], ((ry_hf/rz_hf)[:-1, i]-(ry_hf/rz_hf)[1:, i]), -(ry_hf/rz_hf)[1:-1, i], [-(ry_hf/rz_hf)[1, i], -(ry_hf/rz_hf)[1, i], (ry_hf/rz_hf)[-2, i], (ry_hf/rz_hf)[-2, i]]) 
+        CLV1[i*(nz-1):(i+1)*(nz-1), i*(nz-1):(i+1)*(nz-1)] = tridiag((ry_hf/rz_hf)[1:-1, i], ((ry_hf/rz_hf)[:-1, i]-(ry_hf/rz_hf)[1:, i]), -(ry_hf/rz_hf)[1:-1, i], [-(ry_hf/rz_hf)[1, i], -(ry_hf/rz_hf)[1, i], (ry_hf/rz_hf)[-2, i], (ry_hf/rz_hf)[-2, i]]) 
         CLV1[i*(nz-1):(i+1)*(nz-1), i*(nz-1)+(nz-1):(i+1)*(nz-1)+(nz-1)] = tridiag((ry_hf/rz_hf)[1:-1, i], ((ry_hf/rz_hf)[:-1, i]-(ry_hf/rz_hf)[1:, i]), -(ry_hf/rz_hf)[1:-1, i], [-(ry_hf/rz_hf)[1, i], -(ry_hf/rz_hf)[1, i], (ry_hf/rz_hf)[-2, i], (ry_hf/rz_hf)[-2, i]]) 
 
     CLV = (1j/dy)*CLV0 - (1j/(4*dz))*CLV1 
 
     CLP_blocks = np.asarray([tridiag((U_hf/rz_hf)[1:-1, i], -((U_hf/rz_hf)[:-1, i]+(U_hf/rz_hf)[1:, i]), (U_hf/rz_hf)[1:-1, i], [-(U_hf/rz_hf)[1, i], (U_hf/rz_hf)[1, i], (U_hf/rz_hf)[-2, i], -(U_hf/rz_hf)[-2, i]]) for i in range(ny-1)])
-    CLP        = (1/g)*(k/(dz**2))*block_diag(*CLP_blocks) 
+    CLP = (1/g)*(k/(dz**2))*block_diag(*CLP_blocks) 
 
     CRU = np.zeros_like(CLU)
     CRV = np.zeros_like(CLV)
 
     CRP_blocks = np.asarray([tridiag((1/rz_hf)[1:-1, i], -((1/rz_hf)[:-1, i]+(1/rz_hf)[1:, i]), (1/rz_hf)[1:-1, i], [-(1/rz_hf)[1, i], (1/rz_hf)[1, i], (1/rz_hf)[-2, i], -(1/rz_hf)[-2, i]]) for i in range(ny-1)])
-    CRP        = (1/g)*(k/(dz**2))*block_diag(*CRP_blocks) 
+    CRP = (1/g)*(k/(dz**2))*block_diag(*CRP_blocks) 
         
     ########################################################################################################################################################################################################
-    # (iX) Apply boundary conditions
+    # (VII) Apply boundary conditions (CHECKED)
     ########################################################################################################################################################################################################
 
+    # No-normal flow at the meridional walls of the domain
     MLV[:(nz-1),:(nz-1)]   = np.diag(np.ones(nz-1)) 
     MLV[-(nz-1):,-(nz-1):] = np.diag(np.ones(nz-1))
 
@@ -253,7 +254,7 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
     MRV[-(nz-1):,:] = 0
 
     ########################################################################################################################################################################################################
-    # (X) Build the coefficient matrices A and B of the generalised eigenvalue problem
+    # (VIII) Build the coefficient matrices A and B of the generalised eigenvalue problem (CHECKED)
     ########################################################################################################################################################################################################
     
     # Form the LHS and RHS of each equation of motion as matrices
@@ -264,7 +265,7 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
     A = np.vstack([ZLE, MLE, CLE]); B = np.vstack([ZRE, MRE, CRE])
     
     ########################################################################################################################################################################################################
-    # (Xi)  Solve the (sparse) generalised eigenvalue problem
+    # (IX)  Solve the (sparse) generalised eigenvalue problem (needs checking, solve RK, EADY, STONE using a sparse solver to check)
     ########################################################################################################################################################################################################
     
     sA = sparse.csr_matrix(A); sB = sparse.csr_matrix(B)
