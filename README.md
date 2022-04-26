@@ -6,7 +6,7 @@ Files of interest are:
 
 sparse_solver.py - Sparse eigensolver (scipy.linalg.eigs) for the generalised eigenvalue problem obtained from the discrete linear stability problem
 
-dense_solver.py - Dense eigensolver (scipy.linalg.eig) for the generalised eigenvalue problem for the 1D and 2D Rayleigh-Kuo, Eady and Stone problems
+dense_solver.py - Dense eigensolver (scipy.linalg.eig) for the generalised eigenvalue problem for the 1D and 2D Rayleigh-Kuo, Eady and Stone problems (dense_solver is located in the test_cases file)
 
 sparse_solver calls upon the following module:
 
