@@ -2,35 +2,17 @@ import numpy as np
 import os
 import sys
 
+import domain
 import mean_fields
 
-def on_each_grid(ny, nz, k, case, integration, stability):
+def on_each_grid(ny, nz, k, case, integration, stability, assume):
     
     # Calculate the domain used for contour plotting---------------------------------------------------
     
-    if case == 'NEMO':
-        if integration == 'u-by430':
-            lat = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/latitude_12.txt')
-        else:
-            lat = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/latitude_25.txt')
-            
-        depth = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/depth.txt'); depth = -depth[::-1]
-        
-        L = abs(lat[0])*111.12*1000
-        D = abs(depth[0])
-        
-    else:
-        L = (10*111.32)*1000 # Meridional half-width of the domain (m)
-        D = 1000             # Depth of the domain (m)
-
-    y = np.linspace(-L, L, ny); z = np.linspace(-D, 0, nz) 
-
-    dy = abs(y[1]-y[0]); y_mid = (y[:y.size] + 0.5*dy)[:-1]
-    dz = abs(z[1]-z[0]); z_mid = (z[:z.size] + 0.5*dz)[:-1]
-
-    Y,Z         = np.meshgrid(y, z);         Y_full,Z_half = np.meshgrid(y, z_mid) 
-    Y_mid,Z_mid = np.meshgrid(y_mid, z_mid); Y_half,Z_full = np.meshgrid(y_mid, z)
+    # Calculate the grid for a given case and integration
+    y, y_mid, dy, Y, Y_mid, Y_half, Y_full, z, z_mid, dz, Z, Z_mid, Z_half, Z_full, L, D = domain.grid(ny, nz, case, integration)
     
+    # Dimensional values
     g, r0 = 9.81, 1026
     
     # Specify the filenames of the eigenvector that we aim to plot ----------------------------------
@@ -51,7 +33,7 @@ def on_each_grid(ny, nz, k, case, integration, stability):
     else:
         raise ValueError(f'The specified files do not exist\n{fname[0]}\n{fname[1]}')  
        
-    U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf, r, r_mid, r_hf, ry,ry_mid, ry_hf, rz, rz_mid, rz_hf = mean_fields.on_each_grid(ny, nz, case, integration, stability)
+    U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf, r, r_mid, r_hf, ry,ry_mid, ry_hf, rz, rz_mid, rz_hf = mean_fields.on_each_grid(ny, nz, case, integration, stability, assume)
        
     u = np.reshape(evecs[:(ny-1)*(nz-1)], (ny-1, nz-1)).T
     v = np.reshape(evecs[(ny-1)*(nz-1):(2*ny-1)*(nz-1)], (ny, nz-1)).T
@@ -87,19 +69,14 @@ def on_each_grid(ny, nz, k, case, integration, stability):
         for l in range(1,nz-1):
             p_w[l, j] = 0.5*(p[l, j] + p[l-1, j])  
             
-    # Calculate the density perturbation 
-            
+    # Calculate the density perturbation -----------------------------------------------------------------
+    
     dpdz_w = np.zeros((nz, ny-1), dtype=complex)
     for j in range(ny-1):
         for l in range(1,nz-1):
-            dpdz_w[l, j] = 0.5*(dpdz[l, j] + dpdz[l-1, j])
+            dpdz_w[l, j] = (1/dz)*(p[l,j]-p[l-1,j])
             
-    rho = -(1/g)*dpdz_w 
-    
-    #rho = np.zeros((nz, ny-1), dtype=complex)
-    #for j in range(ny-1):
-    #    for l in range(nz-2):
-    #        rho[l, j] = (1j/(k*(U_hf[l,j]-cs)))*v_w[l, j]*ry_hf[l,j]+w[l,j]*rz_hf[l,j])        
+    rho = -(1/g)*dpdz_w     
 
     rho_v = np.zeros((nz-1, ny), dtype=complex)
     for j in range(1,ny-1):
@@ -111,7 +88,7 @@ def on_each_grid(ny, nz, k, case, integration, stability):
         for l in range(nz-1):
             rho_p[l, j] = 0.5*(rho[l+1, j]+rho[l, j])    
             
-    # Calculate the vertical velocity perturbation        
+    # Calculate the vertical velocity perturbation ---------------------------------------------------------       
     
     w = np.zeros((nz, ny-1), dtype=complex)
     for j in range(ny-1):
@@ -127,5 +104,10 @@ def on_each_grid(ny, nz, k, case, integration, stability):
     for j in range(ny-1):
         for l in range(nz-1):
             w_p[l, j] = 0.5*(w[l+1, j]+w[l, j])
+            
+    rho = np.zeros((nz, ny-1), dtype=complex)
+    for j in range(ny-1):
+        for l in range(1,nz-1):
+            rho[l, j] = (1j/(k*(U_hf[l,j]-cs)))*(v_w[l,j]*ry_hf[l,j]+w[l,j]*rz_hf[l,j])
 
     return u, u_v, u_w, v, v_p, v_w, p, p_v, p_w, w, w_v, w_p, rho, rho_v, rho_p 

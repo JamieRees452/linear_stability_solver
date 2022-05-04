@@ -8,48 +8,29 @@ from scipy.integrate import trapz
 import sys
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+import domain
 import mean_fields
 
-ny, nz, case, integration, stability = int(sys.argv[1]), int(sys.argv[2]), str(sys.argv[3]), str(sys.argv[4]), str(sys.argv[5])
+ny, nz, case, integration, stability, assume = int(sys.argv[1]), int(sys.argv[2]), str(sys.argv[3]), str(sys.argv[4]), str(sys.argv[5]), str(sys.argv[6])
 
-if case == 'NEMO':
-    if integration == 'u-by430':
-        lat = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/latitude_12.txt')
-    else:
-        lat = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/latitude_25.txt')
-        
-    depth = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/depth.txt'); depth = -depth[::-1]
-    
-    L = abs(lat[0])*111.12*1000
-    D = abs(depth[0])
-    
-else:
-    L = (10*111.12)*1000 # Meridional half-width of the domain (m)
-    D = 1000             # Depth of the domain (m)
+# Calculate the grid for a given case and integration
+y, y_mid, dy, Y, Y_mid, Y_half, Y_full, z, z_mid, dz, Z, Z_mid, Z_half, Z_full, L, D = domain.grid(ny, nz, case, integration)
 
-y = np.linspace(-L, L, ny); z = np.linspace(-D, 0, nz) 
-
-dy = abs(y[1]-y[0]); y_mid = (y[:y.size] + 0.5*dy)[:-1]
-dz = abs(z[1]-z[0]); z_mid = (z[:z.size] + 0.5*dz)[:-1]
-
-Y,Z         = np.meshgrid(y, z);         Y_full,Z_half = np.meshgrid(y, z_mid) 
-Y_mid,Z_mid = np.meshgrid(y_mid, z_mid); Y_half,Z_full = np.meshgrid(y_mid, z)
-
-U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf, r, r_mid, r_hf, ry, ry_mid, ry_hf, rz, rz_mid, rz_hf = mean_fields.on_each_grid(ny, nz, case, integration, stability)
+U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf, r, r_mid, r_hf, ry, ry_mid, ry_hf, rz, rz_mid, rz_hf = mean_fields.on_each_grid(ny, nz, case, integration, stability, assume)
 g, r0, beta = 9.81, 1026, 2.29e-11    
 
 Q  = -(1/r0)*(ry*Uz + (beta*Y-Uy)*rz)
 Qy = np.gradient(Q, y, axis=1)
 
 if case == 'NEMO':
-    fname = [f'/home/rees/lsa/figures/mean_fields/U/U_{case}_{integration}_{stability}_{ny:02}_{nz:02}.png',
-             f'/home/rees/lsa/figures/mean_fields/r/r_{case}_{integration}_{stability}_{ny:02}_{nz:02}.png',
-             f'/home/rees/lsa/figures/mean_fields/ryrz/ryrz_{case}_{integration}_{stability}_{ny:02}_{nz:02}.png',
-             f'/home/rees/lsa/figures/mean_fields/Qy/Qy_{case}_{integration}_{stability}_{ny:02}_{nz:02}.png',
-             f'/home/rees/lsa/figures/mean_fields/Uy/Uy_{case}_{integration}_{stability}_{ny:02}_{nz:02}.png',
-             f'/home/rees/lsa/figures/mean_fields/Uz/Uz_{case}_{integration}_{stability}_{ny:02}_{nz:02}.png',
-             f'/home/rees/lsa/figures/mean_fields/ry/ry_{case}_{integration}_{stability}_{ny:02}_{nz:02}.png',
-             f'/home/rees/lsa/figures/mean_fields/rz/rz_{case}_{integration}_{stability}_{ny:02}_{nz:02}.png']
+    fname = [f'/home/rees/lsa/figures/mean_fields/U/U_{case}_{integration}_{stability}_{assume}_{ny:02}_{nz:02}.png',
+             f'/home/rees/lsa/figures/mean_fields/r/r_{case}_{integration}_{stability}_{assume}_{ny:02}_{nz:02}.png',
+             f'/home/rees/lsa/figures/mean_fields/ryrz/ryrz_{case}_{integration}_{stability}_{assume}_{ny:02}_{nz:02}.png',
+             f'/home/rees/lsa/figures/mean_fields/Qy/Qy_{case}_{integration}_{stability}_{assume}_{ny:02}_{nz:02}.png',
+             f'/home/rees/lsa/figures/mean_fields/Uy/Uy_{case}_{integration}_{stability}_{assume}_{ny:02}_{nz:02}.png',
+             f'/home/rees/lsa/figures/mean_fields/Uz/Uz_{case}_{integration}_{stability}_{assume}_{ny:02}_{nz:02}.png',
+             f'/home/rees/lsa/figures/mean_fields/ry/ry_{case}_{integration}_{stability}_{assume}_{ny:02}_{nz:02}.png',
+             f'/home/rees/lsa/figures/mean_fields/rz/rz_{case}_{integration}_{stability}_{assume}_{ny:02}_{nz:02}.png']
 else:
     fname = [f'/home/rees/lsa/figures/mean_fields/U/U_{case}_{ny:02}_{nz:02}.png',
              f'/home/rees/lsa/figures/mean_fields/r/r_{case}_{ny:02}_{nz:02}.png',
@@ -86,12 +67,19 @@ elif case == 'Proehl_3':
     axes.set_xticks([-1e6, -8e5, -6e5, -4e5, -2e5, 0])
     axes.set_yticks([-300, -150, 0])
     
+elif case == 'NEMO':
+    axes.set_ylim([-250, 0])
+
+    axes.set_xticks([-1.5e6, -1e6, -5e5, 0, 5e5, 1e6, 1.5e6])
+    axes.set_yticks([-250, -200, -150, -100, -50, 0])
+    
 else:
     axes.set_xlim([-8e5, 8e5])
     axes.set_ylim([-250, 0])
 
     axes.set_xticks([-8e5, -6e5, -4e5, -2e5, 0, 2e5, 4e5, 6e5, 8e5])
     axes.set_yticks([-250, -200, -150, -100, -50, 0])
+
 
 axes.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 axes.tick_params(axis='both', which='major', labelsize=14)
@@ -129,6 +117,12 @@ elif case == 'Proehl_3':
 
     axes.set_xticks([-1e6, -8e5, -6e5, -4e5, -2e5, 0])
     axes.set_yticks([-300, -150, 0])
+    
+elif case == 'NEMO':
+    axes.set_ylim([-250, 0])
+
+    axes.set_xticks([-1.5e6, -1e6, -5e5, 0, 5e5, 1e6, 1.5e6])
+    axes.set_yticks([-250, -200, -150, -100, -50, 0])
     
 else:
     axes.set_xlim([-8e5, 8e5])
@@ -176,12 +170,19 @@ elif case == 'Proehl_3':
     axes.set_xticks([-1e6, -8e5, -6e5, -4e5, -2e5, 0])
     axes.set_yticks([-300, -150, 0])
     
+elif case == 'NEMO':
+    axes.set_ylim([-250, 0])
+
+    axes.set_xticks([-1.5e6, -1e6, -5e5, 0, 5e5, 1e6, 1.5e6])
+    axes.set_yticks([-250, -200, -150, -100, -50, 0])
+    
 else:
     axes.set_xlim([-8e5, 8e5])
     axes.set_ylim([-250, 0])
 
     axes.set_xticks([-8e5, -6e5, -4e5, -2e5, 0, 2e5, 4e5, 6e5, 8e5])
     axes.set_yticks([-250, -200, -150, -100, -50, 0])
+
 
 axes.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 axes.tick_params(axis='both', which='major', labelsize=14)
@@ -223,12 +224,19 @@ elif case == 'Proehl_3':
     axes.set_xticks([-1e6, -8e5, -6e5, -4e5, -2e5, 0])
     axes.set_yticks([-300, -150, 0])
     
+elif case == 'NEMO':
+    axes.set_ylim([-250, 0])
+
+    axes.set_xticks([-1.5e6, -1e6, -5e5, 0, 5e5, 1e6, 1.5e6])
+    axes.set_yticks([-250, -200, -150, -100, -50, 0])
+    
 else:
     axes.set_xlim([-8e5, 8e5])
     axes.set_ylim([-250, 0])
 
     axes.set_xticks([-8e5, -6e5, -4e5, -2e5, 0, 2e5, 4e5, 6e5, 8e5])
     axes.set_yticks([-250, -200, -150, -100, -50, 0])
+
 
 axes.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 axes.tick_params(axis='both', which='major', labelsize=14)
@@ -269,12 +277,19 @@ elif case == 'Proehl_3':
     axes.set_xticks([-1e6, -8e5, -6e5, -4e5, -2e5, 0])
     axes.set_yticks([-300, -150, 0])
     
+elif case == 'NEMO':
+    axes.set_ylim([-250, 0])
+
+    axes.set_xticks([-1.5e6, -1e6, -5e5, 0, 5e5, 1e6, 1.5e6])
+    axes.set_yticks([-250, -200, -150, -100, -50, 0])
+    
 else:
     axes.set_xlim([-8e5, 8e5])
     axes.set_ylim([-250, 0])
 
     axes.set_xticks([-8e5, -6e5, -4e5, -2e5, 0, 2e5, 4e5, 6e5, 8e5])
     axes.set_yticks([-250, -200, -150, -100, -50, 0])
+
 
 axes.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 axes.tick_params(axis='both', which='major', labelsize=14)
@@ -315,12 +330,19 @@ elif case == 'Proehl_3':
     axes.set_xticks([-1e6, -8e5, -6e5, -4e5, -2e5, 0])
     axes.set_yticks([-300, -150, 0])
     
+elif case == 'NEMO':
+    axes.set_ylim([-250, 0])
+
+    axes.set_xticks([-1.5e6, -1e6, -5e5, 0, 5e5, 1e6, 1.5e6])
+    axes.set_yticks([-250, -200, -150, -100, -50, 0])
+    
 else:
     axes.set_xlim([-8e5, 8e5])
     axes.set_ylim([-250, 0])
 
     axes.set_xticks([-8e5, -6e5, -4e5, -2e5, 0, 2e5, 4e5, 6e5, 8e5])
     axes.set_yticks([-250, -200, -150, -100, -50, 0])
+
 
 axes.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 axes.tick_params(axis='both', which='major', labelsize=14)
@@ -361,12 +383,19 @@ elif case == 'Proehl_3':
     axes.set_xticks([-1e6, -8e5, -6e5, -4e5, -2e5, 0])
     axes.set_yticks([-300, -150, 0])
     
+elif case == 'NEMO':
+    axes.set_ylim([-250, 0])
+
+    axes.set_xticks([-1.5e6, -1e6, -5e5, 0, 5e5, 1e6, 1.5e6])
+    axes.set_yticks([-250, -200, -150, -100, -50, 0])
+    
 else:
     axes.set_xlim([-8e5, 8e5])
     axes.set_ylim([-250, 0])
 
     axes.set_xticks([-8e5, -6e5, -4e5, -2e5, 0, 2e5, 4e5, 6e5, 8e5])
     axes.set_yticks([-250, -200, -150, -100, -50, 0])
+
 
 axes.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 axes.tick_params(axis='both', which='major', labelsize=14)
@@ -407,12 +436,19 @@ elif case == 'Proehl_3':
     axes.set_xticks([-1e6, -8e5, -6e5, -4e5, -2e5, 0])
     axes.set_yticks([-300, -150, 0])
     
+elif case == 'NEMO':
+    axes.set_ylim([-250, 0])
+
+    axes.set_xticks([-1.5e6, -1e6, -5e5, 0, 5e5, 1e6, 1.5e6])
+    axes.set_yticks([-250, -200, -150, -100, -50, 0])
+    
 else:
     axes.set_xlim([-8e5, 8e5])
     axes.set_ylim([-250, 0])
 
     axes.set_xticks([-8e5, -6e5, -4e5, -2e5, 0, 2e5, 4e5, 6e5, 8e5])
     axes.set_yticks([-250, -200, -150, -100, -50, 0])
+
 
 axes.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 axes.tick_params(axis='both', which='major', labelsize=14)

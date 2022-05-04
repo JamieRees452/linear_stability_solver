@@ -11,8 +11,9 @@ import sys
 
 import calculate_NEMO_fields
 import calculate_Proehl_fields
+import domain
 
-def on_each_grid(ny, nz, case, integration, stability):
+def on_each_grid(ny, nz, case, integration, stability, assume):
     """
     Calculate the mean fields on each grid
                             
@@ -43,31 +44,15 @@ def on_each_grid(ny, nz, case, integration, stability):
         Mean density field calculated using thermal wind balance
     """
 
+    # Calculate the grid for a given case and integration
+    y, y_mid, dy, Y, Y_mid, Y_half, Y_full, z, z_mid, dz, Z, Z_mid, Z_half, Z_full, L, D = domain.grid(ny, nz, case, integration)
+
     if case == 'NEMO':
-        if integration == 'u-by430':
-            lat = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/latitude_12.txt')
+        U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf = calculate_NEMO_fields.load_mean_velocity(ny, nz, integration, stability, assume)
+        if assume == 'RAW': # use the data from the integration rather than from thermal wind balance 
+            r, r_mid, r_hf, ry, ry_mid, ry_hf, rz, rz_mid, rz_hf = calculate_NEMO_fields.load_mean_density(ny, nz, integration, stability, assume)
         else:
-            lat = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/latitude_25.txt')
-
-        depth = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/depth.txt'); depth = -depth[::-1]
-        
-        L = abs(lat[0])*111.12*1000
-        D = abs(depth[0])
-        
-    else:
-        L = (10*111.12)*1000 # Meridional half-width of the domain (m)
-        D = 1000             # Depth of the domain (m)
-
-    y = np.linspace(-L, L, ny); z = np.linspace(-D, 0, nz) 
-
-    dy = abs(y[1]-y[0]); y_mid = (y[:y.size] + 0.5*dy)[:-1]
-    dz = abs(z[1]-z[0]); z_mid = (z[:z.size] + 0.5*dz)[:-1]
-
-    Y,Z         = np.meshgrid(y, z);         Y_full,Z_half = np.meshgrid(y, z_mid) 
-    Y_mid,Z_mid = np.meshgrid(y_mid, z_mid); Y_half,Z_full = np.meshgrid(y_mid, z)
-
-    if case == 'NEMO':
-        U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf = calculate_NEMO_fields.load_mean_velocity(ny, nz, integration, stability)
+            pass
     else:
         U    , Uy    , Uz     = calculate_Proehl_fields.mean_velocity(Y     , Z     , case)
         U_mid, Uy_mid, Uz_mid = calculate_Proehl_fields.mean_velocity(Y_mid , Z_mid , case)
@@ -80,24 +65,55 @@ def on_each_grid(ny, nz, case, integration, stability):
     g      = 9.81              # Gravitational acceleration (ms^{-2})
 
     # Calculate the mean density profile (by thermal wind balance)
-    
-    if case == 'NEMO':
-        N2, N2_mid = calculate_NEMO_fields.load_mean_buoyancy(nz, integration, stability) 
+    if case == 'NEMO' and assume == 'TWB':
+        N2, N2_mid = calculate_NEMO_fields.mean_buoyancy(nz, integration, stability, assume) 
     else:
         N2     = 8.883e-5*np.ones(Z.shape[0])
         N2_mid = 8.883e-5*np.ones(Z_mid.shape[0])
+        
+    if case == 'NEMO':
+        if assume == 'TWB': # Calculate the density filds from thermal wind balance
+            eq = ny//2
+            
+            # To integrate from the equator to the southern wall we flip the meridional direction, integrate as usual then flip back meridionally
 
-    r = (r0/g)*(beta*integrate.cumtrapz(Y*Uz, y, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y), 1)).T) + r0
-    ry = (beta*r0/g)*Y*Uz; rz = np.gradient(r, z, axis=0); 
-    
-    # For the NEMO case we artificially change rz such that rz<0 everywhere in the domain. This allows us to preliminarily calculate growth rates
-    # We do still need to check where the error (or even if it is an error) in rz. We comment this change out for the Proehl cases.
-    rz=rz-np.amax(rz)*1.5 
-    
-    r_hf = (r0/g)*(beta*integrate.cumtrapz(Y_half*Uz_hf, y_mid, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y)-1, 1)).T) + r0
-    ry_hf = (beta*r0/g)*Y_half*Uz_hf; rz_hf = np.gradient(r_hf, z, axis=0); rz_hf=rz_hf-np.amax(rz_hf)*1.5 # artificial changes
+            y_north  = y[eq:]; y_south      = y[:eq][::-1] 
+            Y_north  = Y[:, eq:]; Y_south   = Y[:, :eq][:, ::-1]
+            Z_north  = Z[:, eq:]; Z_south   = Z[:, :eq][:, ::-1]
+            Uz_north = Uz[:, eq:]; Uz_south = Uz[:, :eq][:, ::-1]
 
-    r_mid = (r0/g)*(beta*integrate.cumtrapz(Y_mid*Uz_mid, y_mid, initial=0) - np.tile(integrate.cumtrapz(N2_mid, z_mid, initial=0), (len(y)-1, 1)).T) + r0
-    ry_mid = (beta*r0/g)*Y_mid*Uz_mid; rz_mid = np.gradient(r_mid, z_mid, axis=0); rz_mid=rz_mid-np.amax(rz_mid)*1.5 # artificial changes
+            y_mid_north = y_mid[eq:]; y_mid_south    = y_mid[:eq][::-1] 
+            Y_hf_north  = Y_half[:, eq:]; Y_hf_south = Y_half[:, :eq][:, ::-1]
+            Z_hf_north  = Z_full[:, eq:]; Z_hf_south = Z_full[:, :eq][:, ::-1]
+            Uz_hf_north = Uz_hf[:, eq:]; Uz_hf_south = Uz_hf[:, :eq][:, ::-1]
+
+            Y_mid_north  = Y_mid[:, eq:]; Y_mid_south   = Y_mid[:, :eq][:, ::-1]
+            Z_mid_north  = Z_mid[:, eq:]; Z_mid_south   = Z_mid[:, :eq][:, ::-1]
+            Uz_mid_north = Uz_mid[:, eq:]; Uz_mid_south = Uz_mid[:, :eq][:, ::-1]
+
+            r_north = (r0/g)*(beta*integrate.cumtrapz(Y_north*Uz_north, y_north, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y_north), 1)).T) + r0
+            r_south = (r0/g)*(beta*integrate.cumtrapz(Y_south*Uz_south, y_south, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y_south), 1)).T) + r0
+            r       = np.hstack([r_south[:, ::-1], r_north]); ry = (beta*r0/g)*Y*Uz; rz = np.gradient(r, z, axis=0)
+
+            r_hf_north = (r0/g)*(beta*integrate.cumtrapz(Y_hf_north*Uz_hf_north, y_mid_north, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y_mid_north), 1)).T) + r0
+            r_hf_south = (r0/g)*(beta*integrate.cumtrapz(Y_hf_south*Uz_hf_south, y_mid_south, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y_mid_south), 1)).T) + r0
+            r_hf       = np.hstack([r_hf_south[:, ::-1], r_hf_north]); ry_hf = (beta*r0/g)*Y_half*Uz_hf; rz_hf = np.gradient(r_hf, z, axis=0)
+
+            r_mid_north = (r0/g)*(beta*integrate.cumtrapz(Y_mid_north*Uz_mid_north, y_mid_north, initial=0) - np.tile(integrate.cumtrapz(N2_mid, z_mid, initial=0), (len(y_mid_north), 1)).T) + r0
+            r_mid_south = (r0/g)*(beta*integrate.cumtrapz(Y_mid_south*Uz_mid_south, y_mid_south, initial=0) - np.tile(integrate.cumtrapz(N2_mid, z_mid, initial=0), (len(y_mid_south), 1)).T) + r0
+            r_mid       = np.hstack([r_mid_south[:, ::-1], r_mid_north]); ry_mid = (beta*r0/g)*Y_mid*Uz_mid; rz_mid = np.gradient(r_mid, z_mid, axis=0)
+            
+        else:
+            pass  # Use the density from the integration rather than from thermal wind balance
+        
+    else:
+        r = (r0/g)*(beta*integrate.cumtrapz(Y*Uz, y, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y), 1)).T) + r0
+        ry = (beta*r0/g)*Y*Uz; rz = np.gradient(r, z, axis=0); 
+        
+        r_hf = (r0/g)*(beta*integrate.cumtrapz(Y_half*Uz_hf, y_mid, initial=0) - np.tile(integrate.cumtrapz(N2, z, initial=0), (len(y)-1, 1)).T) + r0
+        ry_hf = (beta*r0/g)*Y_half*Uz_hf; rz_hf = np.gradient(r_hf, z, axis=0)
+
+        r_mid = (r0/g)*(beta*integrate.cumtrapz(Y_mid*Uz_mid, y_mid, initial=0) - np.tile(integrate.cumtrapz(N2_mid, z_mid, initial=0), (len(y)-1, 1)).T) + r0
+        ry_mid = (beta*r0/g)*Y_mid*Uz_mid; rz_mid = np.gradient(r_mid, z_mid, axis=0)
     
     return U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf, r, r_mid, r_hf, ry,ry_mid, ry_hf, rz, rz_mid, rz_hf 

@@ -10,6 +10,7 @@ from   scipy.sparse        import diags
 from   scipy.sparse.linalg import eigs, ArpackNoConvergence
 from   scipy               import sparse
 
+import domain
 import mean_fields 
 
 def tridiag(subdiag, diag, supdiag, bc):
@@ -59,7 +60,7 @@ def tridiag(subdiag, diag, supdiag, bc):
     
     return tri_matrix
  
-def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, iter_input): 
+def gep(ny, nz, k, case, integration, stability, assume, init_guess, values, tol_input, iter_input): 
     """
     Solve the generalised eigenvalue problem (gep) corresponding to a discretised linear stability problem
                             
@@ -112,34 +113,14 @@ def gep(ny, nz, k, case, integration, stability, init_guess, values, tol_input, 
     # (I) Set up the domain (CHECKED)
     ########################################################################################################################################################################################################
 
-    if case == 'NEMO':
-        if integration == 'u-by430':
-            lat = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/latitude_12.txt')
-        else:
-            lat = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/latitude_25.txt')
-            
-        depth = np.loadtxt(f'/home/rees/lsa/NEMO_mean_fields/depth.txt'); depth = -depth[::-1]
-        
-        L = abs(lat[0])*111.12*1000
-        D = abs(depth[0])
-        
-    else:
-        L = (10*111.12)*1000 # Meridional half-width of the domain (m)
-        D = 1000             # Depth of the domain (m)
-
-    y = np.linspace(-L, L, ny); z = np.linspace(-D, 0, nz) 
-
-    dy = abs(y[1]-y[0]); y_mid = (y[:y.size] + 0.5*dy)[:-1]
-    dz = abs(z[1]-z[0]); z_mid = (z[:z.size] + 0.5*dz)[:-1]
-
-    Y,Z         = np.meshgrid(y, z);         Y_full,Z_half = np.meshgrid(y, z_mid) 
-    Y_mid,Z_mid = np.meshgrid(y_mid, z_mid); Y_half,Z_full = np.meshgrid(y_mid, z)
+    # Calculate the grid for a given case and integration
+    y, y_mid, dy, Y, Y_mid, Y_half, Y_full, z, z_mid, dz, Z, Z_mid, Z_half, Z_full, L, D = domain.grid(ny, nz, case, integration)
         
     ########################################################################################################################################################################################################
     # (II) Specify the mean zonal flow and denisty profiles (CHECKED for case=Proehl, needs more checking for case=NEMO)
     ########################################################################################################################################################################################################
 
-    U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf, r, r_mid, r_hf, ry, ry_mid, ry_hf, rz, rz_mid, rz_hf = mean_fields.on_each_grid(ny, nz, case, integration, stability)
+    U, U_mid, U_hf, U_fh, Uy, Uy_mid, Uy_hf, Uz, Uz_mid, Uz_hf, r, r_mid, r_hf, ry, ry_mid, ry_hf, rz, rz_mid, rz_hf = mean_fields.on_each_grid(ny, nz, case, integration, stability, assume)
 
     ########################################################################################################################################################################################################
     # (III) Typical dimensional parameters 
