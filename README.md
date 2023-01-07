@@ -50,6 +50,8 @@ python calculate_evals_evecs_single.py 100 50 6.67e-6 Proehl_1 00 00
 
 This produces the following output
 
+![Here we have](/images/example_screenshot.png)
+
 To analyse the outputs we can plot the eigenvector, eddy energy budget, and GEOMETRIC diagnostics
 ```
 python linear_plot_eigenvectors.py 100 50 6.67e-6 Proehl_1 00 00
