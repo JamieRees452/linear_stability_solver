@@ -7,6 +7,7 @@ Our linear stability solver solves the two-dimensional linearised equations of m
 ## Table of Contents
 * [General info](#general-info)
 * [Setup](#setup)
+* [Code Examples](#codeexamples)
 * [To Do](#todo)
 
 ## General info
@@ -36,6 +37,10 @@ C:.
     ├───Proehl_7
     └───Proehl_8
 ```
+
+Here we 
+
+## Code Examples
 
 Here we 
 
