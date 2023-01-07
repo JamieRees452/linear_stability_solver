@@ -62,9 +62,10 @@ These output figures are saved to the /saved_data/debug directory
 
 ## To Do
 
-* Solve using a separate numerical method
-  - Here we have
+* Solve the linear stability problem using an additional independent numerical method
+  - We have solved the linear stability problem using a finite difference method. However, we might have concerns over the reliability of the results obtained using only one method. To this extent, we aim to solve the linear stability problem using a Chebyshev collocation method.
 
 * Pathlib
+  - Files are specific to Unix. We should use pathlib so that the file structures also agree with Windows and Mac.
 
 
