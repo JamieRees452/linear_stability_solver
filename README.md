@@ -45,8 +45,18 @@ Here we
 To find the most unstable eigenvalue/eigenvector pair for a functional mean flow
 
 ```
-python calculate_evals_evecs_single.py 100 50
+python calculate_evals_evecs_single.py 100 50 6.67e-6 Proehl_1 00 00
 ```
+
+This produces the following output
+
+To analyse the outputs we can plot the eigenvector, eddy energy budget, and GEOMETRIC diagnostics
+```
+python linear_plot_eigenvectors.py 100 50 6.67e-6 Proehl_1 00 00
+python linear_plot_eddy_energy_budget.py 100 50 6.67e-6 Proehl_1 00 00
+python linear_plot_geometric_diagnostics.py 100 50 6.67e-6 Proehl_1 00 00
+```
+These output figures are saved to the /saved_data/debug directory
 
 ## To Do
 
