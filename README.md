@@ -50,7 +50,7 @@ python calculate_evals_evecs_single.py 100 50 6.67e-6 Proehl_1 00 00
 
 This produces the following output
 
-![Here we have](/images/example_screenshot.png)
+![Figure](/images/example_screenshot.png)
 
 To analyse the outputs we can plot the eigenvector, eddy energy budget, and GEOMETRIC diagnostics
 ```
@@ -63,5 +63,8 @@ These output figures are saved to the /saved_data/debug directory
 ## To Do
 
 * Solve using a separate numerical method
+  - Here we have
+
+* Pathlib
 
 
