@@ -42,7 +42,11 @@ Here we
 
 ## Code Examples
 
-Here we 
+To find the most unstable eigenvalue/eigenvector pair for a functional mean flow
+
+```
+python calculate_evals_evecs_single.py 100 50
+```
 
 ## To Do
 
