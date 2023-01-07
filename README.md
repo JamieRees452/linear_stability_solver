@@ -19,7 +19,7 @@ Lorem ipsum
 The file structure should be as follows
 
 ```bash
-C:.
+/
 ├───linear_figures
 │   ├───debug
 │   └───thesis
