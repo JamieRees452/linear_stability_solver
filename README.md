@@ -7,6 +7,7 @@ Our linear stability solver solves the two-dimensional linearised equations of m
 ## Table of Contents
 * [General info](#general-info)
 * [Setup](#setup)
+* [Procedure](#procedure)
 * [Code Examples](#codeexamples)
 * [To Do](#todo)
 
@@ -39,6 +40,18 @@ The file structure should be as follows
 ```
 
 Here we 
+
+## Procedure
+
+As a complete example with the code, we investigate the linear stability of an eastward flowing Gaussian Jet centered on the equator and in depth (Proehl_1). The mean fields are visualised via
+
+```
+python linear_plot_mean_fields.py 100 50 Proehl_1 00 00
+```
+
+The mean fields are saved to /linear_figures/debug. The figures of importance are shown below
+
+
 
 ## Code Examples
 
