@@ -51,8 +51,6 @@ python linear_plot_mean_fields.py 100 50 Proehl_1 00 00
 
 The mean fields are saved to /linear_figures/debug. The figures of importance are shown below
 
-Solarized dark             |  Solarized Ocean
-:-------------------------:|:-------------------------:
 ![](/images/U_Proehl_1.png)  |  ![](/images/r_Proehl_1.png)
 
 ## Code Examples
