@@ -8,7 +8,7 @@ import os
 from   scipy.interpolate import interp1d
 import scipy.interpolate as interp
 
-WORK_DIR = '/home/rees/lsa'
+WORK_DIR = os.getcwd()
 
 def mean_velocity(ny, nz, case, month0, month1):
     """

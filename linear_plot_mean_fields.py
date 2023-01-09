@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 ny, nz, case, month0, month1 = args.ny, args.nz, args.case, args.month0, args.month1
 
-WORK_DIR = '/home/rees/lsa' 
+WORK_DIR = os.getcwd() 
 
 # Calculate the grid for a given case and integration
 y, y_mid, dy, Y, Y_mid, Y_half, Y_full, z, z_mid, dz, Z, Z_mid, Z_half, Z_full, L, D = domain.grid(ny, nz, case)

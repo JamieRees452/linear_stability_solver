@@ -33,7 +33,7 @@ args = parser.parse_args()
 
 ny, nz, init_guess, case, month0, month1, values, k_start, k_end, k_num = args.ny, args.nz, args.init_guess, args.case, args.month0, args.month1, args.values, args.k_start, args.k_end, args.k_num
 
-WORK_DIR = '/home/rees/lsa' 
+WORK_DIR = os.getcwd() 
 
 # Labels used for the initial guess eigenvalue for the filename
 guess_re = str(init_guess.real*100).replace('.','').replace('-','m')

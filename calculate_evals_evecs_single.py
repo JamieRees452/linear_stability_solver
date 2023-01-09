@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 ny, nz, k, init_guess, case, month0, month1 = args.ny, args.nz, args.k, args.init_guess, args.case, args.month0, args.month1
 
-WORK_DIR = '/home/rees/lsa' 
+WORK_DIR = os.getcwd() 
 
 print(f'\n    ------------------------------------------------------------------')
 print(f'    |           Solving the Generalised Eigenvalue Problem           ')

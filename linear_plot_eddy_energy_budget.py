@@ -13,7 +13,7 @@ import domain
 import mean_fields
 import perturbations
 
-WORK_DIR = '/home/rees/lsa'
+WORK_DIR = os.getcwd() 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('ny'         , type=int  , help='Number of meridional gridpoints')

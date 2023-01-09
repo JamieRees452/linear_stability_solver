@@ -2,8 +2,9 @@
 Calculate the meshgrids for the half/full points on the staggered grid
 """
 import numpy as np
+import os
 
-WORK_DIR = '/home/rees/lsa' 
+WORK_DIR = os.getcwd()  
 
 def grid(ny, nz, case):
     """
