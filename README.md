@@ -7,7 +7,6 @@ Our linear stability solver solves the two-dimensional linearised equations of m
 ## Table of Contents
 * [Setup](#setup)
 * [Procedure](#procedure)
-* [Code Examples](#codeexamples)
 * [To Do](#todo)
 * [Citations](#citations)
 
