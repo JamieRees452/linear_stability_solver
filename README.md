@@ -56,6 +56,34 @@ Mean Zonal Velocity        |  Mean Density
 :-------------------------:|:-------------------------:
 ![](/images/U_Proehl_1.png)|  ![](/images/r_Proehl_1.png)
 
+Calculate the growth rates over a range of wavenumbers by sweeping initial guesses of the eigenvalues
+
+```
+python  calculate_evals_evecs_multiple.py 100 50 0.25 Proehl_1 00 00 3 1e-8 1e-5 150
+```
+
+Plot the calculated growth rates
+
+```
+python linear_plot_growth_rates.py 100 50 Proehl_1 00 00 3 1e-8 1e-5 150
+```
+
+Output is shown below
+
+(Figure)
+
+Calculate the eigenvalue and eigenvector at the most unstable mode 
+
+```
+python calculate_evals_evecs_single.py 100 50 0.25 Proehl_1 00 00
+```
+
+Plot eigenvectors
+
+Calculate and plot terms in the linearised eddy energy budget
+
+Calculate and plot GEOMETRIC diagnostics
+
 ## Code Examples
 
 To find the most unstable eigenvalue/eigenvector pair for a functional mean flow
