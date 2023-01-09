@@ -8,7 +8,7 @@ corresponding eigenvectors x[i]
 import build_matrices
 import solve_gep
 
-def gep(ny, nz, k, init_guess, case, month0, month1):
+def gep(ny, nz, k, init_guess, case, month0, month1, values, tol_input):
     """
     Find the most unstable eigenvalue and eigenvector ofthe square matrices A and B.
     
@@ -58,14 +58,14 @@ def gep(ny, nz, k, init_guess, case, month0, month1):
             Error of the eigenvalue/eigenvector pair
     """
     
-    print(f'    | Building matrices A and B                                      |')
+    print(f'    | Building matrices A and B                                      ')
     A, B = build_matrices.gep(ny, nz, k, case, month0, month1)
-    print(f'    | Successfully built A and B                                     |')
+    print(f'    | Successfully built A and B                                     ')
 
-    print(f'    | Solve using implicitly restarted Arnoldi method                |')
-    print(f'    | Starting iterations                                            |')
-    evals, evecs, maxdiffs = solve_gep.evals(A, B, init_guess)
-    print(f'    | Completed iterations                                           |')
-    print(f'    | Eigenvalue converged                                           |')
+    print(f'    | Solve using implicitly restarted Arnoldi method                ')
+    print(f'    | Starting iterations                                            ')
+    evals, evecs, maxdiffs = solve_gep.evals(A, B, init_guess, values, tol_input)
+    print(f'    | Completed iterations                                           ')
+    print(f'    | Eigenvalue converged                                           ')
       
     return evals, evecs, maxdiffs

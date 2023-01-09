@@ -9,7 +9,7 @@ import numpy               as np
 from   scipy.sparse.linalg import eigs, ArpackNoConvergence
 from   scipy               import sparse
 
-def evals(A, B, init_guess):
+def evals(A, B, init_guess, values, tol_input):
     """
     Find the most unstable eigenvalue and eigenvector ofthe square matrices A and B.
     
@@ -40,7 +40,7 @@ def evals(A, B, init_guess):
             Error of the eigenvalue/eigenvector pair
     """
     try:
-        evals, evecs = eigs(A, k=1, M=B, which='SI', sigma=init_guess, v0=np.ones(A.shape[0]))
+        evals, evecs = eigs(A, k=values, M=B, which='SI', sigma=init_guess, v0=np.ones(A.shape[0]), tol=tol_input)
     except ArpackNoConvergence as err:
         print(f'ARPACK failed to converge at wavenumber {k}. Eigenvalue at the final iteration is {err.eigenvalues}.\n')
     

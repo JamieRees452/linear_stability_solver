@@ -6,7 +6,7 @@ corresponding eigenvectors x[i]
 
 Example
 -------
-python calculate_evals_evecs.py 50 50 6e-6 -0.2 NEMO_25 01 02
+python calculate_evals_evecs_single.py 50 50 6e-6 -0.2 NEMO_25 01 02
 """
 
 import argparse
@@ -30,17 +30,17 @@ ny, nz, k, init_guess, case, month0, month1 = args.ny, args.nz, args.k, args.ini
 WORK_DIR = '/home/rees/lsa' 
 
 print(f'\n    ------------------------------------------------------------------')
-print(f'    |           Solving the Generalised Eigenvalue Problem           |')
-print(f'    |                            Ax=cBx                              |')
-print(f'    |           using an implicitly restarted Arnoldi method         |')
-print(f'    |           and with coefficient matrices A,B = {int((3*ny-4)*(nz-1))}x{int((3*ny-4)*(nz-1))}      |')
+print(f'    |           Solving the Generalised Eigenvalue Problem           ')
+print(f'    |                            Ax=cBx                              ')
+print(f'    |           using an implicitly restarted Arnoldi method         ')
+print(f'    |           and with coefficient matrices A,B = {int((3*ny-4)*(nz-1))}x{int((3*ny-4)*(nz-1))}      ')
 print(f'    ------------------------------------------------------------------')
-print(f'    | Inputs:                                                        |')
-print(f'    | Grid Resolution   = ({ny:02},{nz:02})                                  |')
-print(f'    | Wavenumber        = {k}                                      |')
-print(f'    | Eigenvalue Search = {init_guess}                                       |')
-print(f'    |                                                                |')
-print(f'    | Progress:                                                      |')
+print(f'    | Inputs:                                                        ')
+print(f'    | Grid Resolution   = ({ny:02},{nz:02})                                  ')
+print(f'    | Wavenumber        = {k}                                      ')
+print(f'    | Eigenvalue Search = {init_guess}                                       ')
+print(f'    |                                                                ')
+print(f'    | Progress:                                                      ')
 
 # List of filenames (fname) where the outputs (eigenvalue, eigenvector, and maxdiff) are to be saved
 fname = [f'{WORK_DIR}/saved_data/{case}/evals_{case}_{month0}_{month1}_{ny:02}_{nz:02}_{str(int(k*1e8))}.txt',
@@ -49,12 +49,12 @@ fname = [f'{WORK_DIR}/saved_data/{case}/evals_{case}_{month0}_{month1}_{ny:02}_{
         
 # If the files (fname) already exist then we decide whether we want to overwrite the existing result
 if (os.path.exists(fname[0]) and os.path.exists(fname[1]) and os.path.exists(fname[2])):
-    user_input = input(f'    | Overwrite existing saved data?                                 |')
+    user_input = input(f'    | Overwrite existing saved data?                                 ')
     
     # Overwrite the existing saved data
     if user_input == 'y':
-        print(f'    | Overwriting existing saved data                                |')
-        evals, evecs, maxdiffs = eigensolver_single.gep(ny, nz, k, init_guess, case, month0, month1)
+        print(f'    | Overwriting existing saved data                                ')
+        evals, evecs, maxdiffs = eigensolver_single.gep(ny, nz, k, init_guess, case, month0, month1, values=1, tol_input=0)
         
         np.savetxt(fname[0], evals.view(float).reshape(-1, 2))
         np.savetxt(fname[1], evecs.view(float).reshape(-1, 2))
@@ -62,7 +62,7 @@ if (os.path.exists(fname[0]) and os.path.exists(fname[1]) and os.path.exists(fna
         
     # Do not overwrite the existing saved data
     else:
-        print(f'    | Loading existing saved data                                    |')
+        print(f'    | Loading existing saved data                                    ')
 
         evals = np.loadtxt(fname[0]).view(complex).reshape(-1) 
         evecs = np.loadtxt(fname[1]).view(complex).reshape(-1) 
@@ -70,7 +70,7 @@ if (os.path.exists(fname[0]) and os.path.exists(fname[1]) and os.path.exists(fna
             
 # If the files (fname) do not already exist then calculate and save the outputs
 else: 
-    evals, evecs, maxdiffs = eigensolver_single.gep(ny, nz, k, init_guess, case, month0, month1)
+    evals, evecs, maxdiffs = eigensolver_single.gep(ny, nz, k, init_guess, case, month0, month1, values=1, tol_input=0)
     
     np.savetxt(fname[0], evals.view(float).reshape(-1, 2))
     np.savetxt(fname[1], evecs.view(float).reshape(-1, 2))
@@ -78,8 +78,8 @@ else:
     
 cs = evals[np.argmax(evals.imag)]
 
-print(f'    |                                                                |')
-print(f'    | Outputs:                                                       |')
-print(f'    | Eigenvalue = {cs.real:.16f}+{cs.imag:.16f}i           |')
-print(f'    | Error      = {maxdiffs[0]}                             |')
+print(f'    |                                                                ')
+print(f'    | Outputs:                                                       ')
+print(f'    | Eigenvalue = {cs.real}+{cs.imag}i           ')
+print(f'    | Error      = {maxdiffs[0]}                             ')
 print(f'    ------------------------------------------------------------------')
