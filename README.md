@@ -2,7 +2,7 @@
 
 The aim of this solver is to investigate tropical instability waves (TIWs) in the equatorial oceans by means of a linear stability analysis.
 
-Our linear stability solver solves the two-dimensional linearised equations of motion for an inviscid Buossinesq fluid on an equatorial beta plane. The equations of motion are discretised using a finite difference method and the resulting generalised eigenvalue problem is solved with scipy using an implicitly restarted Arnoldi method. With this repository, one can reproduce the results in the linear stability analysis section of my thesis.
+Our linear stability solver solves the two-dimensional linearised equations of motion for an inviscid Buossinesq fluid on an equatorial beta plane. The equations of motion are discretised using a finite difference method and the resulting generalised eigenvalue problem is solved with scipy using an implicitly restarted Arnoldi method. With this repository, one will be able to reproduce the results in the linear stability analysis section of my thesis.
  
 ## Table of Contents
 * [Setup](#setup)
