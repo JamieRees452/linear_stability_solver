@@ -10,6 +10,7 @@ Our linear stability solver solves the two-dimensional linearised equations of m
 * [Procedure](#procedure)
 * [Code Examples](#codeexamples)
 * [To Do](#todo)
+* [Citations](#citations)
 
 ## General info
 
@@ -83,4 +84,7 @@ These output figures are saved to the /saved_data/debug directory
 * Pathlib
   - Files are specific to Unix. We should use pathlib so that the file structures also agree with Windows and Mac.
 
+## Citations
 
+* Proehl, Jeffrey A. "Linear stability of equatorial zonal flows." Journal of physical oceanography 26.4 (1996): 601-621.
+* Proehl, Jeffrey A. "The role of meridional flow asymmetry in the dynamics of tropical instability." Journal of Geophysical Research: Oceans 103.C11 (1998): 24597-24618.
