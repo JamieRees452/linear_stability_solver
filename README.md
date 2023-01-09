@@ -1,8 +1,8 @@
 # Linear Stability Solver
 
-The broad aim of this solver is to investigate tropical instability waves (TIWs) in the equatorial oceans by means of a linear stability analysis.
+The aim of this solver is to investigate tropical instability waves (TIWs) in the equatorial oceans by means of a linear stability analysis.
 
-Our linear stability solver solves the two-dimensional linearised equations of motion for an inviscid Buossinesq fluid on an equatorial beta plane. The equations of motion are discretised using a finite difference method and the resulting generalised eigenvalue problem is solved with scipy using an implicitly restarted Arnoldi method. The aim of this project is transparency in the results of my thesis since, with this repository, one can reproduce the results in the linear stability analysis section of my thesis.
+Our linear stability solver solves the two-dimensional linearised equations of motion for an inviscid Buossinesq fluid on an equatorial beta plane. The equations of motion are discretised using a finite difference method and the resulting generalised eigenvalue problem is solved with scipy using an implicitly restarted Arnoldi method. With this repository, one can reproduce the results in the linear stability analysis section of my thesis.
  
 ## Table of Contents
 * [Setup](#setup)
@@ -34,8 +34,6 @@ The file structure should be as follows
     └───Proehl_8
 ```
 
-Here we 
-
 ## Procedure
 
 As a complete example with the code, we investigate the linear stability of an eastward flowing Gaussian Jet centered on the equator and in depth (Proehl_1). The mean fields are visualised via
@@ -44,7 +42,7 @@ As a complete example with the code, we investigate the linear stability of an e
 python linear_plot_mean_fields.py 100 50 Proehl_1 00 00
 ```
 
-The mean fields are saved to /linear_figures/debug. The figures of importance are shown below
+The mean fields are saved to /linear_figures/debug
 
 Mean Zonal Velocity        |  Mean Density
 :-------------------------:|:-------------------------:
@@ -99,6 +97,9 @@ python linear_plot_geometric_diagnostics.py 100 50 6.67e-6 Proehl_1 00 00
 
 * Pathlib
   - Files are specific to Unix. We should use pathlib so that the file structures also agree with Windows and Mac.
+  
+* Thesis Figures
+  - Currently, we have only output simlpe figures which are primarily used for debugging. The neater figures which will be included in my thesis will be added to this repository eventually
 
 ## Citations
 
