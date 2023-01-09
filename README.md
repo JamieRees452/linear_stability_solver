@@ -54,7 +54,7 @@ Mean Zonal Velocity        |  Mean Density
 Calculate the growth rates over a range of wavenumbers by sweeping initial guesses of the eigenvalues
 
 ```
-python  calculate_evals_evecs_multiple.py 100 50 0.25 Proehl_1 00 00 3 1e-8 1e-5 150
+python calculate_evals_evecs_multiple.py 100 50 0.25 Proehl_1 00 00 3 1e-8 1e-5 150
 ```
 
 Plot the calculated growth rates
