@@ -78,6 +78,8 @@ Calculate the eigenvalue and eigenvector at the most unstable mode
 python calculate_evals_evecs_single.py 100 50 0.25 Proehl_1 00 00
 ```
 
+![Figure](/images/Proehl_1_evals_single_output.png)
+
 Plot eigenvectors
 
 Calculate and plot terms in the linearised eddy energy budget
