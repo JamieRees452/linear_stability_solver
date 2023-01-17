@@ -8,6 +8,7 @@ corresponding eigenvectors x[i]
 import numpy               as np
 from   scipy.sparse.linalg import eigs, ArpackNoConvergence
 from   scipy               import sparse
+from   interruptingcow     import timeout
 
 def evals(A, B, init_guess, values, tol_input):
     """
@@ -39,14 +40,27 @@ def evals(A, B, init_guess, values, tol_input):
     maxdiffs : float
             Error of the eigenvalue/eigenvector pair
     """
+    time_limit = 20*60
+    
     try:
-        evals, evecs = eigs(A, k=values, M=B, which='SI', sigma=init_guess, v0=np.ones(A.shape[0]), tol=tol_input)
-    except ArpackNoConvergence as err:
-        print(f'ARPACK failed to converge at wavenumber {k}. Eigenvalue at the final iteration is {err.eigenvalues}.\n')
     
-    diffs = A.dot(evecs)-B.dot(evecs)*evals
-    maxdiffs = np.linalg.norm(diffs, axis=0, ord=np.inf)
+        with timeout(time_limit, exception=RuntimeError):
+            evals, evecs = eigs(A, k=values, M=B, which='LI', sigma=init_guess, v0=np.ones(A.shape[0]), tol=tol_input)
+            
+            if tol_input == 0:
+                print(f'    | Completed iterations                                           ')
+                print(f'    | Eigenvalue converged                                           ')
+            
+            diffs = A.dot(evecs)-B.dot(evecs)*evals
+            maxdiffs = np.linalg.norm(diffs, axis=0, ord=np.inf)
     
-    evecs = evecs[:, np.argmax(evals.imag)]
+            evecs = evecs[:, np.argmax(evals.imag)]
+            
+    except RuntimeError:
+    
+        if tol_input == 0:
+            print(f'    | Eigenvalue did not converge within the time limit')
+            print(f'    | Setting eigenvalues to zero')
+        evals, evecs, maxdiffs = np.array([0+0*1j]*values), np.empty(A.shape[0])*np.nan, [0.]
     
     return evals, evecs, maxdiffs

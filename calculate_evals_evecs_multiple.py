@@ -32,6 +32,7 @@ parser.add_argument('k_num'      , type=int  , help='Number of steps')
 args = parser.parse_args()
 
 ny, nz, init_guess, case, month0, month1, values, k_start, k_end, k_num = args.ny, args.nz, args.init_guess, args.case, args.month0, args.month1, args.values, args.k_start, args.k_end, args.k_num
+init_guess = init_guess + 0.1*1j
 
 WORK_DIR = os.getcwd() 
 

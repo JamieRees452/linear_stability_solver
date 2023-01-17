@@ -65,7 +65,5 @@ def gep(ny, nz, k, init_guess, case, month0, month1, values, tol_input):
     print(f'    | Solve using implicitly restarted Arnoldi method                ')
     print(f'    | Starting iterations                                            ')
     evals, evecs, maxdiffs = solve_gep.evals(A, B, init_guess, values, tol_input)
-    print(f'    | Completed iterations                                           ')
-    print(f'    | Eigenvalue converged                                           ')
       
     return evals, evecs, maxdiffs

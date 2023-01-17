@@ -21,7 +21,7 @@ parser.add_argument('k_end'      , type=float, help='Ending wavenumber')
 parser.add_argument('k_num'      , type=int  , help='Number of steps')
 args = parser.parse_args()
 
-ny, nz, init_guess, case, month0, month1, values, k_start, k_end, k_num = args.ny, args.nz, args.init_guess, args.case, args.month0, args.month1, args.values, args.k_start, args.k_end, args.k_num
+ny, nz, case, month0, month1, values, k_start, k_end, k_num = args.ny, args.nz, args.case, args.month0, args.month1, args.values, args.k_start, args.k_end, args.k_num
 
 WORK_DIR = os.getcwd() 
 
@@ -59,7 +59,7 @@ axes.plot(k_wavenum, most_unstable, '.', ms=3, color='r')
 axes.set_xlabel(r'$k$ [m$^{-1}$]', fontsize=18)
 axes.set_ylabel(r'Growth Rate [s$^{-1}$]', fontsize=18)
 
-axes.set_xlim([0, 1e-5])
+axes.set_xlim([0, k_end])
 axes.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 axes.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 axes.tick_params(axis='both', which='major', labelsize=16)
