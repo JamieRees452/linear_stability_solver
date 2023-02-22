@@ -26,7 +26,7 @@ parser.add_argument('month1'     , type=str  , help='Data from month1 e.g. Dec=1
 args = parser.parse_args()
 
 ny, nz, k, init_guess, case, month0, month1 = args.ny, args.nz, args.k, args.init_guess, args.case, args.month0, args.month1
-init_guess = init_guess + 0.1*1j
+#init_guess = init_guess + 0.1*1j
 
 WORK_DIR = os.getcwd() 
 
